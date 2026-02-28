@@ -1,0 +1,42 @@
+extends layout
+
+block content
+  .container(style="max-width: 800px; margin: 0 auto; width: 100%;")
+    h2(style="margin-bottom: 1rem;") Gerenciar Contatos
+    
+    if successMsg
+      .status-badge(style="background: rgba(16, 185, 129, 0.1); color: #10b981; margin-bottom: 1rem;")
+        | ✅ Contatos importados com sucesso!
+
+    .card(style="background: var(--card-bg); padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 2rem;")
+      h3(style="margin-bottom: 1rem;") Importar CSV
+      p(style="color: var(--text-dim); margin-bottom: 1.5rem; font-size: 0.9rem;") Você pode enviar planilhas exportadas do Google Contacts, ou arquivos CSV simples com as colunas "nome" e "telefone".
+      
+      form(action="/contatos/import" method="POST" enctype="multipart/form-data" style="display: flex; gap: 1rem; align-items: center;")
+        input(type="file" name="csvFile" accept=".csv" required style="flex: 1; padding: 0.5rem; border: 1px dashed rgba(255,255,255,0.2); border-radius: 8px; background: rgba(0,0,0,0.2); color: white;")
+        button(type="submit" style="background: var(--primary); color: #0f172a; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer;") Importar
+
+    .card(style="background: var(--card-bg); padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);")
+      h3(style="margin-bottom: 1rem;") Lista de Contatos (#{contatos.length})
+      
+      if contatos.length > 0
+        .table-responsive(style="overflow-x: auto;")
+          table(style="width: 100%; border-collapse: collapse; text-align: left;")
+            thead
+              tr(style="border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--text-dim); font-size: 0.9rem;")
+                th(style="padding: 0.75rem;") ID
+                th(style="padding: 0.75rem;") Nome
+                th(style="padding: 0.75rem;") Telefone
+                th(style="padding: 0.75rem; text-align: right;") Ações
+          tbody
+            each c in contatos
+              tr(style="border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.95rem;")
+                td(style="padding: 0.75rem; color: var(--text-dim);") ##{c.id}
+                td(style="padding: 0.75rem;")= c.nome
+                td(style="padding: 0.75rem;")= c.telefone
+                td(style="padding: 0.75rem; text-align: right;")
+                  form(action=`/contatos/${c.id}/excluir` method="POST" style="margin: 0; display: inline-block;")
+                    button(type="submit" title="Excluir Contato" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: none; padding: 0.4rem 0.6rem; border-radius: 6px; cursor: pointer;")
+                      i.ph.ph-trash(style="font-size: 1.1rem;")
+      else
+        p(style="color: var(--text-dim); text-align: center; padding: 2rem;") Nenhum contato cadastrado ainda.

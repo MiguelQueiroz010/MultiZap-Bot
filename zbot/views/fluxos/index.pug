@@ -1,0 +1,46 @@
+extends ../layout
+
+block content
+  .container(style="max-width: 800px; margin: 0 auto; width: 100%;")
+    h2(style="margin-bottom: 1rem;") Gerenciar Fluxos
+    
+    if successMsg
+      .status-badge(style="background: rgba(16, 185, 129, 0.1); color: #10b981; margin-bottom: 1rem;") ✅ Operação realizada com sucesso!
+
+    .grid-container(style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; margin-bottom: 2rem;")
+      
+      //- Criar Novo Fluxo
+      .card(style="background: var(--card-bg); padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);")
+        h3(style="margin-bottom: 1.5rem;") Novo Fluxo
+        form(action="/fluxos" method="POST" style="display: flex; flex-direction: column; gap: 1rem;")
+          div
+            label(style="display: block; margin-bottom: 0.5rem; color: var(--text-dim);") Nome do Fluxo
+            input(type="text" name="nome" placeholder="Ex: Boas-vindas" required style="width: 100%; padding: 0.75rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(0,0,0,0.2); color: white;")
+
+          button(type="submit" style="background: var(--primary); color: #0f172a; border: none; padding: 0.75rem; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 1rem;") Criar Fluxo
+
+      //- Lista de Fluxos
+      .card(style="background: var(--card-bg); padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);")
+        h3(style="margin-bottom: 1rem;") Seus Fluxos
+        
+        if fluxos && fluxos.length > 0
+          table(style="width: 100%; border-collapse: collapse; text-align: left;")
+            thead
+              tr(style="border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--text-dim); font-size: 0.9rem;")
+                th(style="padding: 0.75rem;") ID
+                th(style="padding: 0.75rem;") Nome
+                th(style="padding: 0.75rem; text-align: right;") Ações
+            tbody
+              each f in fluxos
+                tr(style="border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.95rem;")
+                  td(style="padding: 0.75rem; color: var(--text-dim);") ##{f.id}
+                  td(style="padding: 0.75rem; font-weight: 600;")= f.nome
+                  td(style="padding: 0.75rem; text-align: right;")
+                    div(style="display: flex; gap: 0.5rem; justify-content: flex-end; align-items: center;")
+                      a(href=`/fluxos/${f.id}` style="background: rgba(56, 189, 248, 0.2); color: var(--primary); padding: 0.4rem 0.8rem; border-radius: 6px; text-decoration: none; font-size: 0.85rem;") Configurar Etapas
+                      
+                      form(action=`/fluxos/${f.id}/excluir` method="POST" style="margin: 0;")
+                        button(type="submit" title="Excluir Fluxo" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: none; padding: 0.4rem 0.6rem; border-radius: 6px; cursor: pointer;")
+                          i.ph.ph-trash(style="font-size: 1.1rem;")
+        else
+          p(style="color: var(--text-dim); text-align: center; padding: 1rem;") Nenhum fluxo criado ainda.

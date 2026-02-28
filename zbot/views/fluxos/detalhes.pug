@@ -1,0 +1,76 @@
+extends ../layout
+
+block content
+  .container(style="max-width: 800px; margin: 0 auto; width: 100%;")
+    
+    //- header do fluxo
+    .flex-header(style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem;")
+      div
+        a(href="/fluxos" style="color: var(--text-dim); text-decoration: none; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 0.5rem;") 
+          i.ph.ph-arrow-left
+          | Voltar aos Fluxos
+        h2(style="margin-top: 0.5rem;") #{fluxo.nome}
+      
+      div(style="text-align: right;")
+        a.status-badge(href=`/fluxos/${fluxo.id}/ativos` style="background: rgba(56, 189, 248, 0.1); color: var(--primary); font-size: 0.8rem; text-decoration: none; display: inline-block;") Ver #{ativos} contatos ativos/erro
+
+    if successMsg
+      .status-badge(style="background: rgba(16, 185, 129, 0.1); color: #10b981; margin-bottom: 1rem;") ✅ Operação realizada com sucesso!
+
+    .grid-container(style="display: grid; grid-template-columns: 2fr 1.5fr; gap: 2rem; margin-bottom: 2rem;")
+      
+      //- Lista de Etapas (Lado Esquerdo)
+      .card(style="background: var(--card-bg); padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);")
+        h3(style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;") 
+          i.ph-fill.ph-arrows-down-up
+          | Sequência de Mensagens
+        
+        if etapas && etapas.length > 0
+          .timeline(style="position: relative; padding-left: 1.5rem; border-left: 2px solid rgba(255,255,255,0.1);")
+            each etapa, index in etapas
+              .timeline-item(style="margin-bottom: 1.5rem; position: relative;")
+                // Bolinha da timeline
+                div(style="position: absolute; left: -2.1rem; top: 0; width: 20px; height: 20px; background: var(--bg-dark); border: 2px solid var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: bold;") #{etapa.ordem}
+                
+                .timeline-content(style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);")
+                  .header(style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;")
+                    span(style="font-size: 0.8rem; color: var(--text-dim); font-weight: 600;") Etapa #{etapa.ordem}
+                    span(style="font-size: 0.8rem; color: #fbbf24; font-family: monospace;") 
+                      i.ph.ph-clock(style="margin-right: 4px; vertical-align: middle;")
+                      if index === 0
+                        | Envio Imediato
+                      else
+                        | +#{etapa.delay_minutos} min
+                  p(style="font-size: 0.95rem; white-space: pre-wrap; line-height: 1.4;")= etapa.mensagem
+        else
+          p(style="color: var(--text-dim); text-align: center; padding: 2rem; border: 1px dashed rgba(255,255,255,0.1); border-radius: 8px;") Nenhuma etapa configurada.<br>Adicione a primeira mensagem ao lado.
+
+      //- Adicionar Etapa (Lado Direito)
+      div
+        .card(style="background: var(--card-bg); padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); position: sticky; top: 100px;")
+          h3(style="margin-bottom: 1.5rem; font-size: 1.1rem;") Adicionar Etapa ##{etapas ? etapas.length + 1 : 1}
+          form(action=`/fluxos/${fluxo.id}/etapas` method="POST" style="display: flex; flex-direction: column; gap: 1rem;")
+            
+            div
+              label(style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.9rem;") Delay em Minutos
+              if etapas && etapas.length === 0
+                input(type="number" name="delay_minutos" value="0" readonly title="A primeira etapa é imediata (0 min)" style="width: 100%; padding: 0.75rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(0,0,0,0.4); color: var(--text-dim); cursor: not-allowed;")
+                p(style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.25rem;") A primeira mensagem entra imediatamente.
+              else
+                input(type="number" name="delay_minutos" min="1" required placeholder="Ex: 5" style="width: 100%; padding: 0.75rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(0,0,0,0.2); color: white;")
+                p(style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.25rem;") Tempo de espera após a etapa anterior.
+
+            div
+              label(style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.9rem;") Mensagem
+              textarea(name="mensagem" required rows="4" placeholder="Olá, tudo bem?" style="width: 100%; padding: 0.75rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(0,0,0,0.2); color: white; resize: vertical;")
+            
+            button(type="submit" style="background: var(--primary); color: #0f172a; border: none; padding: 0.75rem; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 0.5rem;") Salvar Etapa
+
+    //- Ação: Disparar Fluxo
+    if etapas && etapas.length > 0
+      .card(style="background: rgba(16, 185, 129, 0.05); padding: 2rem; border-radius: 16px; border: 1px solid rgba(16, 185, 129, 0.2); text-align: center;")
+        h3(style="margin-bottom: 0.5rem; color: #10b981;") Ativar Fluxo para Contatos
+        p(style="color: var(--text-dim); font-size: 0.9rem; margin-bottom: 1.5rem;") Todos os contatos cadastrados entrarão na Etapa 1 deste fluxo imediatamente.
+        
+        form(action=`/fluxos/${fluxo.id}/iniciar` method="POST")
+          button(type="submit" style="background: #10b981; color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer;") Iniciar Fluxo Agora

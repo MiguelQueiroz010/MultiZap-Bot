@@ -1,64 +1,83 @@
 import { startWhatsApp, enviarMensagem, client } from "./workers/whatsapp.js";
+import { db } from "./database/db.js";
 
-const filaEnvio = [
-  {
-    id: 1,
-    contatoId: 10,
-    telefone: "553192952309@c.us",
-    mensagem: "Olá, isso é um teste",
-    executarEm: new Date(Date.now() - 1000),
-    status: "PENDENTE"
-  },
-  {
-    id: 2,
-    contatoId: 10,
-    telefone: "553192952309@c.us",
-    mensagem: '❤️ "Façam tudo com amor." ❤️\n🌸✨ 🕊️ ✨🌸\nQue o amor seja a base de cada palavra e ação do seu dia. 🌷😊',
-    executarEm: new Date(Date.now() - 9000),
-    status: "PENDENTE"
-  }
-];
+async function processarFilas() {
+  const agoraStr = new Date().toISOString();
 
-async function processarFila() {
-  const agora = new Date();
+  // =============== 1. FILA SIMPLES (Campanhas) ===============
+  db.all("SELECT * FROM fila_envio WHERE status = 'PENDENTE' AND agendado_para <= ?", [agoraStr], async (err, mensagens) => {
+    if (err) return console.error("Erro ao buscar fila_envio:", err);
 
-  // Filtra mensagens pendentes e que já passaram do horário
-  const pendentes = filaEnvio.filter(
-    msg => msg.status === "PENDENTE" && msg.executarEm <= agora
-  );
-
-  if (pendentes.length > 0) {
-    console.log(`Processando ${pendentes.length} mensagens...`);
-  }
-
-  for (const msg of pendentes) {
-    try {
-      await enviarMensagem(msg.telefone, msg.mensagem);
-      msg.status = "ENVIADO";
-      console.log(`Mensagem enviada para ${msg.telefone}`);
-    } catch (error) {
-      console.error(`Erro ao enviar para ${msg.telefone}:`, error);
+    for (const msg of mensagens) {
+      try {
+        await enviarMensagem(msg.telefone, msg.mensagem);
+        db.run("UPDATE fila_envio SET status = 'ENVIADO' WHERE id = ?", [msg.id]);
+        console.log(`[Campanha] Mensagem enviada para ${msg.telefone}`);
+      } catch (error) {
+        db.run("UPDATE fila_envio SET status = 'ERRO' WHERE id = ?", [msg.id]);
+        console.error(`[Campanha] Erro ao enviar para ${msg.telefone}:`, error);
+      }
     }
-  }
+  });
+
+  // =============== 2. FLUXOS (Automações) ===============
+  const queryFluxos = `
+        SELECT 
+            ef.id as execucao_id,
+            ef.fluxo_id,
+            ef.etapa_atual,
+            c.telefone,
+            fe.mensagem,
+            fe.delay_minutos
+        FROM execucao_fluxo ef
+        JOIN contatos c ON ef.contato_id = c.id
+        JOIN fluxo_etapas fe ON ef.fluxo_id = fe.fluxo_id AND ef.etapa_atual = fe.ordem
+        WHERE ef.status = 'ATIVO' AND ef.proxima_execucao <= ?
+    `;
+
+  db.all(queryFluxos, [agoraStr], async (err, execucoes) => {
+    if (err) return console.error("Erro ao buscar execucao_fluxo:", err);
+
+    for (const exec of execucoes) {
+      try {
+        // Envia a mensagem da etapa atual
+        await enviarMensagem(exec.telefone, exec.mensagem);
+        console.log(`[Fluxo ${exec.fluxo_id}] Etapa ${exec.etapa_atual} enviada para ${exec.telefone}`);
+
+        // Verifica se tem uma próxima etapa
+        db.get('SELECT delay_minutos FROM fluxo_etapas WHERE fluxo_id = ? AND ordem = ?', [exec.fluxo_id, exec.etapa_atual + 1], (err, proximaEtapa) => {
+          if (proximaEtapa) {
+            // Calcula nova data se existir proxima etapa
+            const proxData = new Date();
+            proxData.setMinutes(proxData.getMinutes() + proximaEtapa.delay_minutos);
+
+            db.run('UPDATE execucao_fluxo SET etapa_atual = ?, proxima_execucao = ? WHERE id = ?',
+              [exec.etapa_atual + 1, proxData.toISOString(), exec.execucao_id]);
+          } else {
+            // Se não tem próxima etapa, concluiu o fluxo
+            db.run('UPDATE execucao_fluxo SET status = "CONCLUIDO" WHERE id = ?', [exec.execucao_id]);
+          }
+        });
+
+      } catch (error) {
+        console.error(`[Fluxo ${exec.fluxo_id}] Erro ao enviar etapa ${exec.etapa_atual} para ${exec.telefone}:`, error);
+      }
+    }
+  });
 }
 
-// Inicia o processo de login
+// Inicia o processo de login do WhatsApp
 startWhatsApp();
 
-/**
- * Em vez de um IF imediato, usamos um intervalo para checar 
- * se o cliente conectou, ou melhor ainda, exporte o evento no seu worker.
- */
 const checarConexao = setInterval(() => {
-  if (client) { // Verifica se o client existe e se já tem info (logado)
-    console.log("WhatsApp conectado com sucesso! Iniciando processamento da fila...");
-    
-    // Inicia o loop da fila
-    setInterval(processarFila, 5000);
-    
-    // Para de checar a conexão, pois já conectou
+  if (client) {
+    console.log("WhatsApp conectado com sucesso! Iniciando Worker...");
+
+    // Roda a verificação das filas a cada 5 segundos
+    setInterval(processarFilas, 5000);
+
     clearInterval(checarConexao);
   } else {
-    console.log("Aguardando conexão do WhatsApp...");
+    console.log("Aguardando QRCode ou re-conexão do WhatsApp...");
   }
 }, 3000);

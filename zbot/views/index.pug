@@ -1,122 +1,113 @@
-doctype html
-html(lang="pt-br")
-  head
-    meta(charset="UTF-8")
-    meta(name="viewport", content="width=device-width, initial-scale=1.0")
-    title= title
+extends layout
 
-    // Google Font
-    link(href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet")
+block content
+  style.
+    .auth-card {
+      background: var(--card-bg);
+      width: 100%;
+      max-width: 550px;
+      margin: 2rem auto;
+      padding: 3rem;
+      border-radius: 24px;
+      border: 1px solid rgba(255,255,255,0.1);
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    
+    .status-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 20px;
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--primary);
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      transition: all 0.3s ease;
+    }
 
-    style.
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
+    .qr-wrapper {
+      background: white;
+      padding: 15px;
+      border-radius: 16px;
+      margin: 2rem auto;
+      width: fit-content;
+      display: none;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    #qrcode { width: 220px; height: 220px; display: block; }
+
+    .loading-spinner {
+      margin: 2rem auto;
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top: 3px solid var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+  section.auth-card
+    h2(style="margin-bottom: 0.5rem; font-size: 1.75rem;") Conexão WhatsApp
+    p(style="color: var(--text-dim); font-size: 0.95rem; line-height: 1.5;") Escaneie o código abaixo para autenticar o bot. <br> Apenas quando conectado o sistema processará os disparos.
+    
+    hr(style="margin: 2rem 0; border: 0; border-top: 1px solid rgba(255,255,255,0.1);")
+
+    div#status-container
+      span.status-badge#status Aguardando inicialização...
+    
+    div#loading.loading-spinner
+
+    div#qrcode-container.qr-wrapper
+      img#qrcode(src="", alt="QR Code de Conexão")
+
+    div#success-msg(style="display: none; animation: fadeIn 0.5s ease-out;")
+      i.ph-fill.ph-check-circle(style="font-size: 4rem; color: #10b981; margin-bottom: 1rem;")
+      h3(style="margin-bottom: 0.5rem; color: #10b981;") Aparelho Conectado!
+      p(style="color: var(--text-dim); margin-bottom: 2rem; font-size: 0.95rem;") O worker em plano de fundo agora enviará automaticamente as mensagens agendadas.
+      
+      div(style="display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem;")
+        a(href="/contatos" style="background: rgba(255,255,255,0.05); color: white; text-decoration: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 0.95rem; border: 1px solid rgba(255,255,255,0.1); transition: background 0.2s;") Contatos
+        a(href="/campanhas" style="background: var(--primary); color: #0f172a; text-decoration: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 0.95rem; transition: filter 0.2s;") Novas Campanhas
+
+  script(src="/socket.io/socket.io.js")
+  script.
+    const socket = io();
+    const statusEl = document.getElementById('status');
+    const qrEl = document.getElementById('qrcode');
+    const qrCont = document.getElementById('qrcode-container');
+    const loading = document.getElementById('loading');
+    const successMsg = document.getElementById('success-msg');
+
+    socket.on('qrCode', (base64) => {
+      loading.style.display = 'none';
+      qrCont.style.display = 'block';
+      successMsg.style.display = 'none';
+      qrEl.src = base64;
+      statusEl.innerText = 'Pronto para Escanear';
+      statusEl.style.color = '#38bdf8';
+      statusEl.style.background = 'rgba(56, 189, 248, 0.1)';
+      statusEl.style.borderColor = 'rgba(56, 189, 248, 0.2)';
+    });
+
+    socket.on('status', (status) => {
+      // Se não for isLogged/CONNECTED, atualiza o texto normal
+      if (!['isLogged', 'CONNECTED', 'qrReadSuccess', 'inChat'].includes(status)) {
+        statusEl.innerText = status;
       }
 
-      body {
-        font-family: 'Inter', sans-serif;
-        background: linear-gradient(135deg, #0f172a, #1e293b);
-        color: #f1f5f9;
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
+      if (['isLogged', 'CONNECTED', 'qrReadSuccess', 'inChat'].includes(status)) {
+        qrCont.style.display = 'none';
+        loading.style.display = 'none';
+        successMsg.style.display = 'block';
+        statusEl.innerText = 'Conectado';
+        statusEl.style.background = 'rgba(16, 185, 129, 0.1)';
+        statusEl.style.color = '#10b981';
+        statusEl.style.borderColor = 'rgba(16, 185, 129, 0.2)';
       }
-
-      header {
-        width: 100%;
-        padding: 1.2rem 3rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        backdrop-filter: blur(10px);
-        background: rgba(15, 23, 42, 0.6);
-        position: sticky;
-        top: 0;
-      }
-
-      header h1 {
-        font-size: 1.4rem;
-        font-weight: 700;
-        letter-spacing: 1px;
-      }
-
-      nav a {
-        margin-left: 2rem;
-        text-decoration: none;
-        color: #cbd5e1;
-        font-weight: 500;
-        transition: 0.3s;
-      }
-
-      nav a:hover {
-        color: #38bdf8;
-      }
-
-      main {
-        flex: 1;
-        width: 100%;
-        max-width: 1200px;
-        margin: auto;
-        padding: 4rem 2rem;
-      }
-
-      .hero {
-        text-align: center;
-        margin-bottom: 4rem;
-      }
-
-      .hero h2 {
-        font-size: 2.8rem;
-        font-weight: 700;
-        margin-bottom: 1rem;
-      }
-
-      .hero p {
-        font-size: 1.2rem;
-        color: #94a3b8;
-        max-width: 600px;
-        margin: auto;
-      }
-
-      .card-container {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 2rem;
-      }
-
-      .card {
-        background: rgba(30, 41, 59, 0.7);
-        padding: 2rem;
-        border-radius: 16px;
-        transition: 0.3s;
-        backdrop-filter: blur(6px);
-      }
-
-      .card:hover {
-        transform: translateY(-6px);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-      }
-
-      footer {
-        text-align: center;
-        padding: 2rem;
-        background: rgba(15, 23, 42, 0.8);
-        font-size: 0.9rem;
-        color: #94a3b8;
-      }
-
-  body
-    header
-      h1 MeuSite
-      nav
-        a(href="/") Home
-        a(href="/about") Sobre
-        a(href="/contact") Contato
-
-    main
-      block content
-
-    footer
-      p © #{new Date().getFullYear()} - MeuSite. Todos os direitos reservados.
+    });
