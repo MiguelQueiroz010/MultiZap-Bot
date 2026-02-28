@@ -14,49 +14,54 @@ block content
     if successMsg
       .status-badge(style="background: rgba(16, 185, 129, 0.1); color: #10b981; margin-bottom: 1rem;") ✅ Operação realizada com sucesso!
 
-    .card(style="background: var(--card-bg); padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);")
+    .card(style="background: var(--card-bg); padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);")
       
-      h3(style="margin-bottom: 1.5rem;") Acompanhamento de Execuções
+      h3(style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;")
+        i.ph-bold.ph-chart-line-up
+        | Acompanhamento de Execuções
       
       if contatosFluxo && contatosFluxo.length > 0
-        table(style="width: 100%; border-collapse: collapse; text-align: left;")
-          thead
-            tr(style="border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--text-dim); font-size: 0.9rem;")
-              th(style="padding: 0.75rem;") Para
-              th(style="padding: 0.75rem;") Etapa Atual
-              th(style="padding: 0.75rem;") Próxima Check/Envio
-              th(style="padding: 0.75rem;") Status
-              th(style="padding: 0.75rem; text-align: right;") Ações
-          tbody
-            each c in contatosFluxo
-              tr(style="border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.95rem;")
-                td(style="padding: 0.75rem;")
-                  div(style="font-weight: 600;")= c.nome || "Desconhecido"
-                  div(style="font-size: 0.8rem; color: var(--text-dim);")= c.telefone
-                td(style="padding: 0.75rem;") Etapa #{c.etapa_atual}
-                td(style="padding: 0.75rem;")
-                  div= new Date(c.proxima_execucao).toLocaleDateString('pt-BR')
-                  div(style="color: var(--text-dim); font-size: 0.8rem;")= new Date(c.proxima_execucao).toLocaleTimeString('pt-BR')
-                
-                td(style="padding: 0.75rem;")
-                  if c.status === 'ERRO'
-                    span(style="background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600;") ERRO
-                  else
-                    span(style="background: rgba(56, 189, 248, 0.1); color: var(--primary); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600;") ATIVO
-                
-                td(style="padding: 0.75rem; text-align: right;")
-                  div(style="display: flex; gap: 0.5rem; justify-content: flex-end;")
+        .table-responsive(style="overflow-x: auto; border-radius: 8px;")
+          table(style="width: 100%; border-collapse: separate; border-spacing: 0 8px; text-align: left;")
+            thead
+              tr(style="color: var(--text-dim); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;")
+                th(style="padding: 0.5rem 1rem;") Para
+                th(style="padding: 0.5rem 1rem;") Etapa Atual
+                th(style="padding: 0.5rem 1rem;") Próxima Check/Envio
+                th(style="padding: 0.5rem 1rem;") Status
+                th(style="padding: 0.5rem 1rem; text-align: right;") Ações
+            tbody
+              each c in contatosFluxo
+                tr(style="background: rgba(255,255,255,0.03); transition: all 0.2s;")
+                  td(style="padding: 1rem; border-top-left-radius: 8px; border-bottom-left-radius: 8px; word-break: break-word; min-width: 150px;")
+                    div(style="font-weight: 600; color: var(--text-main);")= c.nome || "Desconhecido"
+                    div(style="font-size: 0.8rem; color: var(--text-dim); word-break: break-all;")= c.telefone
+                  td(style="padding: 1rem;")
+                    span(style="background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 20px; font-size: 0.85rem;") Etapa #{c.etapa_atual}
+                  td(style="padding: 1rem;")
+                    div(style="font-size: 0.9rem;")= new Date(c.proxima_execucao).toLocaleDateString('pt-BR')
+                    div(style="color: var(--text-dim); font-size: 0.8rem;")= new Date(c.proxima_execucao).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                  
+                  td(style="padding: 1rem;")
                     if c.status === 'ERRO'
-                      //- Botão Retomar
-                      form(action=`/fluxos/execucao/${c.execucao_id}/retomar` method="POST" style="margin: 0;")
+                      span(style="background: rgba(239, 68, 68, 0.15); color: #ef4444; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; border: 1px solid rgba(239, 68, 68, 0.2);") ERRO
+                    else
+                      span(style="background: rgba(56, 189, 248, 0.15); color: var(--primary); padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; border: 1px solid rgba(56, 189, 248, 0.2);") ATIVO
+                  
+                  td(style="padding: 1rem; text-align: right; border-top-right-radius: 8px; border-bottom-right-radius: 8px;")
+                    div(style="display: flex; gap: 0.5rem; justify-content: flex-end;")
+                      if c.status === 'ERRO'
+                        form(action=`/fluxos/execucao/${c.execucao_id}/retomar` method="POST" style="margin: 0;")
+                          input(type="hidden" name="redirecionar_para_fluxo" value=fluxo.id)
+                          button(type="submit" title="Retomar Execução" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); padding: 0.5rem; border-radius: 8px; cursor: pointer;")
+                            i.ph-bold.ph-play(style="font-size: 1.1rem;")
+                      
+                      form(action=`/fluxos/execucao/${c.execucao_id}/cancelar` method="POST" style="margin: 0;")
                         input(type="hidden" name="redirecionar_para_fluxo" value=fluxo.id)
-                        button(type="submit" title="Retomar Execução" style="background: rgba(16, 185, 129, 0.2); color: #10b981; border: none; padding: 0.4rem 0.6rem; border-radius: 6px; cursor: pointer;")
-                          i.ph.ph-play(style="font-size: 1.1rem;")
-                    
-                    //- Botão Cancelar
-                    form(action=`/fluxos/execucao/${c.execucao_id}/cancelar` method="POST" style="margin: 0;")
-                      input(type="hidden" name="redirecionar_para_fluxo" value=fluxo.id)
-                      button(type="submit" title="Parar e Remover do Fluxo" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: none; padding: 0.4rem 0.6rem; border-radius: 6px; cursor: pointer;")
-                        i.ph.ph-x-circle(style="font-size: 1.1rem;")
+                        button(type="submit" title="Parar e Remover do Fluxo" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 0.5rem; border-radius: 8px; cursor: pointer;")
+                          i.ph-bold.ph-x-circle(style="font-size: 1.1rem;")
       else
-        p(style="color: var(--text-dim); text-align: center; padding: 2rem;") Não há contatos ativos ou em erro neste fluxo.
+        .empty-state(style="text-align: center; padding: 3rem 1rem;")
+          i.ph-bold.ph-users-three(style="font-size: 3rem; color: var(--text-dim); margin-bottom: 1rem; display: block;")
+          p(style="color: var(--text-dim);") Não há contatos ativos ou em erro neste fluxo.
+

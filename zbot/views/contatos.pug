@@ -16,27 +16,32 @@ block content
         input(type="file" name="csvFile" accept=".csv" required style="flex: 1; padding: 0.5rem; border: 1px dashed rgba(255,255,255,0.2); border-radius: 8px; background: rgba(0,0,0,0.2); color: white;")
         button(type="submit" style="background: var(--primary); color: #0f172a; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer;") Importar
 
-    .card(style="background: var(--card-bg); padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);")
-      h3(style="margin-bottom: 1rem;") Lista de Contatos (#{contatos.length})
+    .card(style="background: var(--card-bg); padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);")
+      h3(style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;")
+        i.ph-bold.ph-users
+        | Lista de Contatos (#{contatos.length})
       
       if contatos.length > 0
-        .table-responsive(style="overflow-x: auto;")
-          table(style="width: 100%; border-collapse: collapse; text-align: left;")
+        .table-responsive(style="overflow-x: auto; border-radius: 8px;")
+          table(style="width: 100%; border-collapse: separate; border-spacing: 0 8px; text-align: left;")
             thead
-              tr(style="border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--text-dim); font-size: 0.9rem;")
-                th(style="padding: 0.75rem;") ID
-                th(style="padding: 0.75rem;") Nome
-                th(style="padding: 0.75rem;") Telefone
-                th(style="padding: 0.75rem; text-align: right;") Ações
-          tbody
-            each c in contatos
-              tr(style="border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.95rem;")
-                td(style="padding: 0.75rem; color: var(--text-dim);") ##{c.id}
-                td(style="padding: 0.75rem;")= c.nome
-                td(style="padding: 0.75rem;")= c.telefone
-                td(style="padding: 0.75rem; text-align: right;")
-                  form(action=`/contatos/${c.id}/excluir` method="POST" style="margin: 0; display: inline-block;")
-                    button(type="submit" title="Excluir Contato" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: none; padding: 0.4rem 0.6rem; border-radius: 6px; cursor: pointer;")
-                      i.ph.ph-trash(style="font-size: 1.1rem;")
+              tr(style="color: var(--text-dim); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;")
+                th(style="padding: 0.5rem 1rem;") ID
+                th(style="padding: 0.5rem 1rem;") Nome
+                th(style="padding: 0.5rem 1rem;") Telefone
+                th(style="padding: 0.5rem 1rem; text-align: right;") Ações
+            tbody
+              each c in contatos
+                tr(style="background: rgba(255,255,255,0.03); transition: all 0.2s;")
+                  td(style="padding: 1rem; color: var(--text-dim); border-top-left-radius: 8px; border-bottom-left-radius: 8px; font-weight: 600;") ##{c.id}
+                  td(style="padding: 1rem; word-break: break-word; min-width: 150px;")
+                    div(style="font-weight: 600; color: var(--text-main);")= c.nome
+                  td(style="padding: 1rem; word-break: break-all; color: var(--primary); font-family: monospace;")= c.telefone
+                  td(style="padding: 1rem; text-align: right; border-top-right-radius: 8px; border-bottom-right-radius: 8px;")
+                    form(action=`/contatos/${c.id}/excluir` method="POST" style="margin: 0; display: inline-block;")
+                      button(type="submit" title="Excluir Contato" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 0.5rem; border-radius: 8px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(239, 68, 68, 0.3)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.15)'")
+                        i.ph-bold.ph-trash-simple(style="font-size: 1.1rem;")
       else
-        p(style="color: var(--text-dim); text-align: center; padding: 2rem;") Nenhum contato cadastrado ainda.
+        .empty-state(style="text-align: center; padding: 3rem 1rem;")
+          i.ph-bold.ph-user-minus(style="font-size: 3rem; color: var(--text-dim); margin-bottom: 1rem; display: block;")
+          p(style="color: var(--text-dim);") Nenhum contato cadastrado ainda.

@@ -10,46 +10,48 @@ block content
     if successMsg
       .status-badge(style="background: rgba(16, 185, 129, 0.1); color: #10b981; margin-bottom: 1rem;") ✅ Operação realizada com sucesso!
 
-    .card(style="background: var(--card-bg); padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);")
+    .card(style="background: var(--card-bg); padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);")
       
-      h3(style="margin-bottom: 1.5rem;") Pendentes e Com Erro
+      h3(style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;")
+        i.ph-bold.ph-tray
+        | Pendentes e Com Erro
       
       if filas && filas.length > 0
-        .table-responsive(style="overflow-x: auto;")
-          table(style="width: 100%; border-collapse: collapse; text-align: left;")
+        .table-responsive(style="overflow-x: auto; border-radius: 8px;")
+          table(style="width: 100%; border-collapse: separate; border-spacing: 0 8px; text-align: left;")
             thead
-            tr(style="border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--text-dim); font-size: 0.9rem;")
-              th(style="padding: 0.75rem;") Para
-              th(style="padding: 0.75rem;") Agendado Para
-              th(style="padding: 0.75rem;") Mensagem
-              th(style="padding: 0.75rem;") Status
-              th(style="padding: 0.75rem; text-align: right;") Ações
-          tbody
-            each f in filas
-              tr(style="border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.95rem;")
-                td(style="padding: 0.75rem;")
-                  div(style="font-weight: 600;")= f.nome || "Desconhecido"
-                  div(style="font-size: 0.8rem; color: var(--text-dim);")= f.telefone
-                td(style="padding: 0.75rem;")
-                  div= new Date(f.agendado_para).toLocaleDateString('pt-BR')
-                  div(style="color: var(--text-dim); font-size: 0.8rem;")= new Date(f.agendado_para).toLocaleTimeString('pt-BR')
-                td(style="padding: 0.75rem; max-width: 250px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;")= f.mensagem
-                td(style="padding: 0.75rem;")
-                  if f.status === 'ERRO'
-                    span(style="background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600;") ERRO
-                  else
-                    span(style="background: rgba(251, 191, 36, 0.1); color: #fbbf24; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600;") PENDENTE
-                td(style="padding: 0.75rem; text-align: right;")
-                  div(style="display: flex; gap: 0.5rem; justify-content: flex-end;")
+              tr(style="color: var(--text-dim); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;")
+                th(style="padding: 0.5rem 1rem;") Para
+                th(style="padding: 0.5rem 1rem;") Agendado Para
+                th(style="padding: 0.5rem 1rem;") Mensagem
+                th(style="padding: 0.5rem 1rem;") Status
+                th(style="padding: 0.5rem 1rem; text-align: right;") Ações
+            tbody
+              each f in filas
+                tr(style="background: rgba(255,255,255,0.03); transition: all 0.2s;")
+                  td(style="padding: 1rem; border-top-left-radius: 8px; border-bottom-left-radius: 8px; word-break: break-word; min-width: 150px;")
+                    div(style="font-weight: 600; color: var(--text-main);")= f.nome || "Desconhecido"
+                    div(style="font-size: 0.8rem; color: var(--text-dim); word-break: break-all;")= f.telefone
+                  td(style="padding: 1rem;")
+                    div(style="font-size: 0.9rem;")= new Date(f.agendado_para).toLocaleDateString('pt-BR')
+                    div(style="color: var(--text-dim); font-size: 0.8rem;")= new Date(f.agendado_para).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                  td(style="padding: 1rem; word-break: break-word; min-width: 200px; max-width: 300px; font-size: 0.9rem; color: var(--text-dim);")= f.mensagem
+                  td(style="padding: 1rem;")
                     if f.status === 'ERRO'
-                      //- Botão Repetir (re-agenda para agora)
-                      form(action=`/filas/${f.id}/repetir` method="POST" style="margin: 0;")
-                        button(type="submit" title="Tentar Novamente" style="background: rgba(16, 185, 129, 0.2); color: #10b981; border: none; padding: 0.4rem 0.6rem; border-radius: 6px; cursor: pointer;")
-                          i.ph.ph-arrow-clockwise(style="font-size: 1.1rem;")
-                    
-                    //- Botão Cancelar
-                    form(action=`/filas/${f.id}/cancelar` method="POST" style="margin: 0;")
-                      button(type="submit" title="Cancelar Envio" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: none; padding: 0.4rem 0.6rem; border-radius: 6px; cursor: pointer;")
-                        i.ph.ph-trash(style="font-size: 1.1rem;")
+                      span(style="background: rgba(239, 68, 68, 0.15); color: #ef4444; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; border: 1px solid rgba(239, 68, 68, 0.2);") ERRO
+                    else
+                      span(style="background: rgba(251, 191, 36, 0.15); color: #fbbf24; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; border: 1px solid rgba(251, 191, 36, 0.2);") PENDENTE
+                  td(style="padding: 1rem; text-align: right; border-top-right-radius: 8px; border-bottom-right-radius: 8px;")
+                    div(style="display: flex; gap: 0.5rem; justify-content: flex-end;")
+                      if f.status === 'ERRO'
+                        form(action=`/filas/${f.id}/repetir` method="POST" style="margin: 0;")
+                          button(type="submit" title="Tentar Novamente" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); padding: 0.5rem; border-radius: 8px; cursor: pointer;")
+                            i.ph-bold.ph-arrow-clockwise(style="font-size: 1.1rem;")
+                      
+                      form(action=`/filas/${f.id}/cancelar` method="POST" style="margin: 0;")
+                        button(type="submit" title="Cancelar Envio" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 0.5rem; border-radius: 8px; cursor: pointer;")
+                          i.ph-bold.ph-trash-simple(style="font-size: 1.1rem;")
       else
-        p(style="color: var(--text-dim); text-align: center; padding: 2rem;") A fila está vazia. Não há itens pendentes ou com erro.
+        .empty-state(style="text-align: center; padding: 3rem 1rem;")
+          i.ph-bold.ph-tray(style="font-size: 3rem; color: var(--text-dim); margin-bottom: 1rem; display: block;")
+          p(style="color: var(--text-dim);") A fila está vazia. Não há itens pendentes ou com erro.

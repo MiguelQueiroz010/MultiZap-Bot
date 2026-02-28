@@ -33,7 +33,17 @@ function createTables() {
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 mensagem TEXT NOT NULL,
                 delay_min INTEGER NOT NULL,
-                delay_max INTEGER NOT NULL
+                delay_max INTEGER NOT NULL,
+                recorrente INTEGER DEFAULT 0,
+                random_library INTEGER DEFAULT 0
+            )
+        `);
+
+        // Tabela de Biblioteca de Mensagens
+        db.run(`
+            CREATE TABLE IF NOT EXISTS biblioteca (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                texto TEXT NOT NULL
             )
         `);
 
@@ -83,7 +93,7 @@ function createTables() {
                 FOREIGN KEY (contato_id) REFERENCES contatos(id)
             )
         `);
-        
+
         console.log('✅ Tabelas criadas/verificadas com sucesso.');
     });
 }

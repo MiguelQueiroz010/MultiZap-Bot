@@ -15,7 +15,7 @@ export function iniciarAgendador(client) {
 
         // =============== 1. FILA SIMPLES (Campanhas) ===============
         const queryFila = `
-            SELECT f.*, c.recorrente 
+            SELECT f.*, c.recorrente, c.random_library
             FROM fila_envio f 
             LEFT JOIN campanhas c ON f.campanha_id = c.id
             WHERE f.status = 'PENDENTE' AND f.agendado_para <= ?
@@ -35,10 +35,24 @@ export function iniciarAgendador(client) {
                         const nextDay = new Date(msg.agendado_para);
                         nextDay.setDate(nextDay.getDate() + 1); // Soma exatas 24 horas
 
-                        db.run(
-                            'INSERT INTO fila_envio (contato_id, telefone, mensagem, agendado_para, status, campanha_id) VALUES (?, ?, ?, ?, ?, ?)',
-                            [msg.contato_id, msg.telefone, msg.mensagem, nextDay.toISOString(), 'PENDENTE', msg.campanha_id]
-                        );
+                        // Se a campanha for de biblioteca aleatória, escolhe uma nova frase
+                        if (msg.random_library === 1) {
+                            db.get("SELECT texto FROM biblioteca ORDER BY RANDOM() LIMIT 1", [], (err, row) => {
+                                if (err) return console.error("Erro ao buscar frase aleatória:", err);
+
+                                const msgTexto = row ? row.texto : msg.mensagem; // fallback se biblioteca sumir
+                                db.run(
+                                    'INSERT INTO fila_envio (contato_id, telefone, mensagem, agendado_para, status, campanha_id) VALUES (?, ?, ?, ?, ?, ?)',
+                                    [msg.contato_id, msg.telefone, msgTexto, nextDay.toISOString(), 'PENDENTE', msg.campanha_id]
+                                );
+                            });
+                        } else {
+                            db.run(
+                                'INSERT INTO fila_envio (contato_id, telefone, mensagem, agendado_para, status, campanha_id) VALUES (?, ?, ?, ?, ?, ?)',
+                                [msg.contato_id, msg.telefone, msg.mensagem, nextDay.toISOString(), 'PENDENTE', msg.campanha_id]
+                            );
+                        }
+
                         console.log(`[Recorrência] Nova repetição agendada para ${msg.telefone} em ${nextDay.toLocaleString("pt-BR")}`);
                     }
 

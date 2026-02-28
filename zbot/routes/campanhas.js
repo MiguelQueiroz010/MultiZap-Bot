@@ -26,12 +26,13 @@ router.get('/', (req, res) => {
 
 // Criar nova campanha
 router.post('/', (req, res) => {
-    const { mensagem, delay_min, delay_max, recorrente, data_agendamento } = req.body;
+    const { mensagem, delay_min, delay_max, recorrente, data_agendamento, random_library } = req.body;
     const min = parseInt(delay_min);
     const max = parseInt(delay_max);
     const isRecorrente = recorrente === '1' ? 1 : 0;
+    const useLibrary = random_library === '1' ? 1 : 0;
 
-    if (!mensagem || isNaN(min) || isNaN(max) || min > max) {
+    if ((!useLibrary && !mensagem) || isNaN(min) || isNaN(max) || min > max) {
         return res.status(400).send("Dados inválidos");
     }
 
@@ -39,60 +40,83 @@ router.post('/', (req, res) => {
         db.run('BEGIN TRANSACTION');
 
         // Insere a campanha
-        db.run('INSERT INTO campanhas (mensagem, delay_min, delay_max, recorrente) VALUES (?, ?, ?, ?)', [mensagem, min, max, isRecorrente], function (err) {
-            if (err) {
-                console.error(err);
-                db.run('ROLLBACK');
-                return res.status(500).send("Erro ao criar campanha");
-            }
-
-            const campanhaId = this.lastID;
-
-            // Pega todos os contatos
-            db.all('SELECT id, telefone FROM contatos', [], (err, contatos) => {
+        db.run('INSERT INTO campanhas (mensagem, delay_min, delay_max, recorrente, random_library) VALUES (?, ?, ?, ?, ?)',
+            [mensagem || (useLibrary ? '[Biblioteca Aleatória]' : ''), min, max, isRecorrente, useLibrary], function (err) {
                 if (err) {
                     console.error(err);
                     db.run('ROLLBACK');
-                    return res.status(500).send("Erro ao buscar contatos");
+                    return res.status(500).send("Erro ao criar campanha");
                 }
 
-                if (contatos.length === 0) {
-                    db.run('COMMIT');
-                    return res.redirect('/campanhas?success=no_contacts');
-                }
+                const campanhaId = this.lastID;
 
-                const stmt = db.prepare('INSERT INTO fila_envio (contato_id, telefone, mensagem, agendado_para, status, campanha_id) VALUES (?, ?, ?, ?, ?, ?)');
-
-                // Se houver agendamento customizado válido, use a data fornecida. Caso contrário, use Date.now().
-                let currentTime = Date.now();
-                if (data_agendamento) {
-                    const parsedData = new Date(data_agendamento).getTime();
-                    if (!isNaN(parsedData)) {
-                        currentTime = parsedData;
-                    }
-                }
-
-                // Enfileira mensagens com delay aleatório acumulativo
-                contatos.forEach(contato => {
-                    const randomDelay = Math.floor(Math.random() * (max - min + 1) + min) * 1000;
-                    currentTime += randomDelay;
-
-                    const agendadoPara = new Date(currentTime).toISOString();
-
-                    stmt.run([contato.id, contato.telefone, mensagem, agendadoPara, 'PENDENTE', campanhaId]);
-                });
-
-                stmt.finalize();
-
-                db.run('COMMIT', (err) => {
+                // Pega todos os contatos
+                db.all('SELECT id, telefone FROM contatos', [], (err, contatos) => {
                     if (err) {
-                        console.error('Erro no commit da fila', err);
-                        return res.status(500).send("Erro ao enfileirar mensagens");
+                        console.error(err);
+                        db.run('ROLLBACK');
+                        return res.status(500).send("Erro ao buscar contatos");
                     }
-                    res.redirect('/campanhas?success=criada');
+
+                    if (contatos.length === 0) {
+                        db.run('COMMIT');
+                        return res.redirect('/campanhas?success=no_contacts');
+                    }
+
+                    // Se usar biblioteca, busca as frases
+                    const getFrases = (callback) => {
+                        if (useLibrary) {
+                            db.all('SELECT texto FROM biblioteca', [], (err, rows) => {
+                                if (err) return callback(err);
+                                if (rows.length === 0) return callback(new Error("Biblioteca vazia"));
+                                callback(null, rows.map(r => r.texto));
+                            });
+                        } else {
+                            callback(null, [mensagem]);
+                        }
+                    };
+
+                    getFrases((err, frases) => {
+                        if (err) {
+                            console.error(err);
+                            db.run('ROLLBACK');
+                            return res.status(500).send(err.message === "Biblioteca vazia" ? "Erro: Cadastre frases na Biblioteca primeiro!" : "Erro ao buscar biblioteca");
+                        }
+
+                        const stmt = db.prepare('INSERT INTO fila_envio (contato_id, telefone, mensagem, agendado_para, status, campanha_id) VALUES (?, ?, ?, ?, ?, ?)');
+
+                        let currentTime = Date.now();
+                        if (data_agendamento) {
+                            const parsedData = new Date(data_agendamento).getTime();
+                            if (!isNaN(parsedData)) {
+                                currentTime = parsedData;
+                            }
+                        }
+
+                        contatos.forEach(contato => {
+                            const randomDelay = Math.floor(Math.random() * (max - min + 1) + min) * 1000;
+                            currentTime += randomDelay;
+
+                            const agendadoPara = new Date(currentTime).toISOString();
+
+                            // Sorteia uma frase se usar library, senão usa a mensagem única
+                            const msgFinal = useLibrary ? frases[Math.floor(Math.random() * frases.length)] : frases[0];
+
+                            stmt.run([contato.id, contato.telefone, msgFinal, agendadoPara, 'PENDENTE', campanhaId]);
+                        });
+
+                        stmt.finalize();
+
+                        db.run('COMMIT', (err) => {
+                            if (err) {
+                                console.error('Erro no commit da fila', err);
+                                return res.status(500).send("Erro ao enfileirar mensagens");
+                            }
+                            res.redirect('/campanhas?success=criada');
+                        });
+                    });
                 });
             });
-        });
     });
 });
 

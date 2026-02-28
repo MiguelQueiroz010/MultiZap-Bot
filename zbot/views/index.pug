@@ -71,9 +71,15 @@ block content
       h3(style="margin-bottom: 0.5rem; color: #10b981;") Aparelho Conectado!
       p(style="color: var(--text-dim); margin-bottom: 2rem; font-size: 0.95rem;") O worker em plano de fundo agora enviará automaticamente as mensagens agendadas.
       
-      div(style="display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem;")
-        a(href="/contatos" style="background: rgba(255,255,255,0.05); color: white; text-decoration: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 0.95rem; border: 1px solid rgba(255,255,255,0.1); transition: background 0.2s;") Contatos
-        a(href="/campanhas" style="background: var(--primary); color: #0f172a; text-decoration: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 0.95rem; transition: filter 0.2s;") Novas Campanhas
+      div(style="display: flex; flex-direction: column; gap: 1rem; align-items: center; margin-top: 2rem;")
+        div(style="display: flex; gap: 1rem; justify-content: center;")
+          a(href="/contatos" style="background: rgba(255,255,255,0.05); color: white; text-decoration: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 0.95rem; border: 1px solid rgba(255,255,255,0.1); transition: background 0.2s;") Contatos
+          a(href="/campanhas" style="background: var(--primary); color: #0f172a; text-decoration: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 0.95rem; transition: filter 0.2s;") Novas Campanhas
+        
+        form(action="/logout" method="POST" style="width: 100%; max-width: 300px;")
+          button(type="submit" style="width: 100%; background: transparent; color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); padding: 0.6rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;" onmouseover="this.style.background='rgba(239, 68, 68, 0.05)'" onmouseout="this.style.background='transparent'")
+            i.ph.ph-sign-out(style="margin-right: 8px;")
+            | Desconectar e trocar conta
 
   script(src="/socket.io/socket.io.js")
   script.

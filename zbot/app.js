@@ -12,6 +12,7 @@ import contatosRouter from './routes/contatos.js';
 import campanhasRouter from './routes/campanhas.js';
 import fluxosRouter from './routes/fluxos.js';
 import filasRouter from './routes/filas.js';
+import bibliotecaRouter from './routes/biblioteca.js';
 import { iniciarAgendador } from './workers/agendador.js';
 
 // Configuração para emular o __dirname no ES6
@@ -35,44 +36,58 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // --- Lógica do WPPConnect ---
-wppconnect.create({
-    session: 'admin-session',
-    catchQR: (base64Qrimg) => {
-        // Envia o QR Code para o front-end
-        io.emit('qrCode', base64Qrimg);
-        io.emit('status', 'Escaneie o QR Code');
-    },
-    statusFind: (statusSession, session) => {
-        console.log('Status da Sessão:', statusSession);
-        // Envia o status atual (isLogged, notLogged, browserClosed, etc)
-        io.emit('status', statusSession);
-    },
-    // Opcional: impede que o bot feche se não houver interação
-    autoClose: 0,
-})
-    .then((client) => {
-        // IMPORTANTE: Quando o 'then' é executado, a conexão foi estabelecida
-        console.log('✅ Cliente conectado com sucesso!');
-        io.emit('status', 'CONNECTED'); // Isso dispara o sucesso no seu Pug
+let clientInstance = null;
+let currentStatus = 'Iniciando...';
 
-        // --- INICIA O WORKER BACKGROUND ASSÍNCRONO --
-        iniciarAgendador(client);
+function iniciarWPP() {
+    currentStatus = 'Iniciando...';
+    io.emit('status', currentStatus);
 
-        client.onMessage((message) => {
-            if (message.body === 'Oi') {
-                client.sendText(message.from, 'Olá! Sou um bot em ES6.');
-            }
-        });
+    wppconnect.create({
+        session: 'admin-session',
+        catchQR: (base64Qrimg) => {
+            io.emit('qrCode', base64Qrimg);
+            currentStatus = 'Escaneie o QR Code';
+            io.emit('status', currentStatus);
+        },
+        statusFind: (statusSession, session) => {
+            console.log('Status da Sessão:', statusSession);
+            currentStatus = statusSession;
+            io.emit('status', currentStatus);
+        },
+        autoClose: 0,
+        protocolTimeout: 60000, // Aumenta timeout para evitar ProtocolError
+        puppeteerOptions: {
+            args: ['--no-sandbox', '--disable-setuid-sandbox'] // Melhora estabilidade
+        }
     })
-    .catch((err) => {
-        console.error(err);
-        io.emit('status', 'Erro na conexão');
-    });
+        .then((client) => {
+            clientInstance = client;
+            console.log('✅ Cliente conectado com sucesso!');
+            currentStatus = 'CONNECTED';
+            io.emit('status', currentStatus);
+
+            iniciarAgendador(client);
+
+            client.onMessage((message) => {
+                if (message.body === 'Oi') {
+                    client.sendText(message.from, 'Olá! Sou um bot em ES6.');
+                }
+            });
+        })
+        .catch((err) => {
+            console.error(err);
+            currentStatus = 'Erro na conexão';
+            io.emit('status', currentStatus);
+        });
+}
+
+// Inicia a conexão pela primeira vez
+iniciarWPP();
 
 // Garante que novos clientes que conectarem ao socket recebam o status atual
 io.on('connection', (socket) => {
     console.log('Novo cliente no painel:', socket.id);
-    // Aqui você poderia adicionar uma lógica para checar se o client já está logado
     socket.emit('status', currentStatus); // Envia o estado atual para quem acabou de chegar
 });
 
@@ -81,10 +96,43 @@ app.get('/', (req, res) => {
     res.render('index', { title: 'ZBot - Painel' });
 });
 
+// Rota de Logout (Reset de Sessão)
+app.post('/logout', async (req, res) => {
+    console.log('🔄 Solicitando logout e reset de sessão...');
+
+    try {
+        if (clientInstance) {
+            await clientInstance.logout();
+            await clientInstance.close();
+            clientInstance = null;
+        }
+    } catch (e) {
+        console.error('Erro ao fechar cliente:', e);
+    }
+
+    // Aguarda um pouco e apaga a pasta da sessão para forçar novo QR
+    setTimeout(() => {
+        const sessionPath = path.join(__dirname, 'tokens', 'admin-session');
+        if (fs.existsSync(sessionPath)) {
+            try {
+                fs.rmSync(sessionPath, { recursive: true, force: true });
+                console.log('Sessão apagada com sucesso.');
+            } catch (err) {
+                console.error('Erro ao apagar pasta de sessão:', err);
+            }
+        }
+
+        // Reinicia o processo
+        iniciarWPP();
+        res.redirect('/');
+    }, 1000);
+});
+
 app.use('/contatos', contatosRouter);
 app.use('/campanhas', campanhasRouter);
 app.use('/fluxos', fluxosRouter);
 app.use('/filas', filasRouter);
+app.use('/biblioteca', bibliotecaRouter);
 
 // Tratamento de erros
 app.use((req, res, next) => next(createError(404)));
@@ -98,15 +146,4 @@ app.use((err, req, res, next) => {
 // Inicialização
 server.listen(port, () => {
     console.log(`🚀 Servidor rodando em http://localhost:${port}`);
-});
-
-let currentStatus = 'Iniciando...';
-
-// Dentro do statusFind e do .then, atualize:
-currentStatus = 'CONNECTED';
-io.emit('status', currentStatus);
-
-// E no io.on('connection'):
-io.on('connection', (socket) => {
-    socket.emit('status', currentStatus); // Envia o estado atual para quem acabou de chegar
 });
