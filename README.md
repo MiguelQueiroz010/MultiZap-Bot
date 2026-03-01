@@ -73,6 +73,8 @@ O ZBot foi construído com as melhores tecnologias do ecossistema JavaScript:
    npm install
    ```
 
+   (Se estiver rodando no codespaces, execute ```bash scripts/install_puppeteer_deps.sh```)
+
 3. **Inicie o servidor:**
    ```bash
    npm start
