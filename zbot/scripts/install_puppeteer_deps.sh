@@ -88,9 +88,8 @@ PACKAGES=(
 echo "Instalando pacotes: ${PACKAGES[*]}"
 ${SUDO} apt-get install -y --no-install-recommends "${PACKAGES[@]}" || true
 
-echo
-echo "3. (OBRIGATÓRIO) Instalar Google Chrome estável (útil se quiser usar o Chrome do sistema)"
-read -p "Deseja instalar google-chrome-stable? [y/N]: " INSTALL_CHROME || true
+echo "3. Instalando Google Chrome estável automaticamente..."
+INSTALL_CHROME="y"
 if [[ "$INSTALL_CHROME" =~ ^[Yy]$ ]]; then
     if command -v apt-key >/dev/null 2>&1; then
         ${SUDO} wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | ${SUDO} apt-key add -
@@ -107,8 +106,8 @@ echo
 echo "4. Limpando cache do Puppeteer (para forçar re-download se necessário)..."
 rm -rf "$HOME/.cache/puppeteer" || true
 
-echo
-echo "5. Instalando dependências npm do projeto"
+echo "5. Rodando 'npm install' no projeto automaticamente..."
+RUN_NPM="y"
 npm install
 
 echo
