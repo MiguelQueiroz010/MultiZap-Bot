@@ -2,27 +2,27 @@ extends layout
 
 block content
   .container(style="max-width: 800px; margin: 0 auto; width: 100%;")
-    h2(style="margin-bottom: 1rem;") Biblioteca de Mensagens (Versículos/Frases)
+    h2(style="margin-bottom: 1rem;") Acervo de Conteúdo (Mensagens e Modelos)
     
     if successMsg
       .status-badge(style="background: rgba(16, 185, 129, 0.1); color: #10b981; margin-bottom: 1rem;")
         if successMsg === 'adicionado'
-          | ✅ Mensagem adicionada à biblioteca!
+          | ✅ Registro adicionado ao acervo com sucesso!
         else if successMsg === 'excluido'
           | ✅ Mensagem removida com sucesso!
 
     .card(style="background: var(--card-bg); padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 2rem;")
-      h3(style="margin-bottom: 1rem;") Cadastrar Nova Frase
-      p(style="color: var(--text-dim); margin-bottom: 1.5rem; font-size: 0.9rem;") Estas frases serão usadas em campanhas configuradas como "Aleatórias da Biblioteca".
+      h3(style="margin-bottom: 1rem;") Cadastrar Novo Conteúdo
+      p(style="color: var(--text-dim); margin-bottom: 1.5rem; font-size: 0.9rem;") Estes textos serão utilizados em campanhas configuradas com o "Sorteio do Acervo".
       
       form(action="/biblioteca" method="POST" style="display: flex; flex-direction: column; gap: 1rem;")
         textarea(name="texto" required rows="3" placeholder="Ex: João 3:16 - Porque Deus amou o mundo de tal maneira..." style="width: 100%; padding: 0.75rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(0,0,0,0.2); color: white; resize: vertical;")
-        button(type="submit" style="background: var(--primary); color: #0f172a; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; align-self: flex-end;") Adicionar à Biblioteca
+        button(type="submit" style="background: var(--primary); color: #0f172a; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; align-self: flex-end;") Salvar no Acervo
 
     .card(style="background: var(--card-bg); padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);")
       h3(style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;")
         i.ph-bold.ph-books
-        | Frases na Biblioteca (#{biblioteca.length})
+        | Itens Registrados no Acervo (#{biblioteca.length})
       
       if biblioteca.length > 0
         .table-responsive(style="overflow-x: auto; border-radius: 8px;")
@@ -39,10 +39,47 @@ block content
                   td(style="padding: 1rem; word-break: break-word;")
                     div(style="color: var(--text-main); line-height: 1.6;")= item.texto
                   td(style="padding: 1rem; text-align: right; border-top-right-radius: 8px; border-bottom-right-radius: 8px;")
-                    form(action=`/biblioteca/${item.id}/excluir` method="POST" style="margin: 0; display: inline-block;")
-                      button(type="submit" title="Excluir Frase" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 0.5rem; border-radius: 8px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(239, 68, 68, 0.3)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.15)'")
-                        i.ph-bold.ph-trash-simple(style="font-size: 1.1rem;")
+                    div(style="display: flex; gap: 8px; justify-content: flex-end;")
+                      button(type="button" title="Editar Mensagem" onclick=`openEditModal(${JSON.stringify(item)})` style="background: rgba(56, 189, 248, 0.15); color: var(--primary); border: 1px solid rgba(56, 189, 248, 0.2); padding: 0.5rem; border-radius: 8px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(56, 189, 248, 0.3)'" onmouseout="this.style.background='rgba(56, 189, 248, 0.15)'")
+                        i.ph-bold.ph-pencil-simple(style="font-size: 1.1rem;")
+                      
+                      form(action=`/biblioteca/${item.id}/excluir` method="POST" style="margin: 0; display: inline-block;" onsubmit="return confirm('Tem certeza que deseja excluir esta mensagem do acervo?')")
+                        button(type="submit" title="Excluir Frase" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 0.5rem; border-radius: 8px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(239, 68, 68, 0.3)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.15)'")
+                          i.ph-bold.ph-trash-simple(style="font-size: 1.1rem;")
       else
         .empty-state(style="text-align: center; padding: 3rem 1rem;")
           i.ph-bold.ph-book-open(style="font-size: 3rem; color: var(--text-dim); margin-bottom: 1rem; display: block;")
-          p(style="color: var(--text-dim);") Sua biblioteca está vazia. Adicione versículos ou frases motivacionais acima!
+          p(style="color: var(--text-dim);") Seu acervo de conteúdo está vazio. Comece registrando novos modelos acima!
+
+  //- Modal de Edição de Acervo
+  #editModal(style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(5px);")
+    .card(style="background: var(--bg-dark); width: 90%; max-width: 500px; padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); position: relative;")
+      button(onclick="closeEditModal()" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 1.5rem;") &times;
+      h3(style="margin-bottom: 1.5rem;") Editar Mensagem do Acervo
+      
+      form#editForm(method="POST")
+        div(style="display: flex; flex-direction: column; gap: 1rem;")
+          div(style="display: flex; flex-direction: column; gap: 0.5rem;")
+            label(style="font-size: 0.9rem; color: var(--text-dim);") Texto / Modelo
+            textarea#editTexto(name="texto" required rows="6" style="padding: 0.75rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(0,0,0,0.2); color: white; resize: vertical;")
+          
+          button(type="submit" style="background: var(--primary); color: #0f172a; border: none; padding: 0.75rem; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 1rem;") Salvar Alterações
+
+  script.
+    function openEditModal(item) {
+      document.getElementById('editForm').action = `/biblioteca/${item.id}/editar`;
+      document.getElementById('editTexto').value = item.texto;
+      document.getElementById('editModal').style.display = 'flex';
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').style.display = 'none';
+    }
+
+    // Fecha ao clicar fora
+    window.onclick = function(event) {
+      const modal = document.getElementById('editModal');
+      if (event.target == modal) {
+        closeEditModal();
+      }
+    }

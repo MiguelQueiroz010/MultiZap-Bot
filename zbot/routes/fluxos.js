@@ -64,6 +64,18 @@ router.post('/:id/etapas', (req, res) => {
     });
 });
 
+// Editar Etapa do Fluxo
+router.post('/etapa/:id/editar', (req, res) => {
+    const etapaId = req.params.id;
+    const { mensagem, delay_minutos, redirecionar_para_fluxo } = req.body;
+
+    db.run('UPDATE fluxo_etapas SET mensagem = ?, delay_minutos = ? WHERE id = ?',
+        [mensagem, delay_minutos || 0, etapaId], (err) => {
+            if (err) return res.status(500).send("Erro ao editar etapa");
+            res.redirect(`/fluxos/${redirecionar_para_fluxo}?success=etapa_editada`);
+        });
+});
+
 // Ação: Iniciar Fluxo para a base
 router.post('/:id/iniciar', (req, res) => {
     const fluxoId = req.params.id;
@@ -142,6 +154,19 @@ router.post('/execucao/:id/retomar', (req, res) => {
     db.run('UPDATE execucao_fluxo SET status = "ATIVO", proxima_execucao = ? WHERE id = ?', [agoraStr, execId], (err) => {
         if (err) return res.status(500).send("Erro ao retomar");
         res.redirect(`/fluxos/${redirecionar_para_fluxo}/ativos?success=retomado`);
+    });
+});
+
+// Editar Nome do Fluxo
+router.post('/:id/editar', (req, res) => {
+    const { nome } = req.body;
+    const id = req.params.id;
+
+    if (!nome) return res.status(400).send("Nome inválido");
+
+    db.run('UPDATE fluxos SET nome = ? WHERE id = ?', [nome.trim(), id], (err) => {
+        if (err) return res.status(500).send("Erro ao editar fluxo");
+        res.redirect('/fluxos?success=editado');
     });
 });
 

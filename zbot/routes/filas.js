@@ -25,6 +25,21 @@ router.get('/', (req, res) => {
     });
 });
 
+// Ação para editar item da fila
+router.post('/:id/editar', (req, res) => {
+    const { mensagem, agendado_para } = req.body;
+    const id = req.params.id;
+
+    if (!mensagem || !agendado_para) return res.status(400).send("Dados inválidos");
+
+    const isoDate = new Date(agendado_para).toISOString();
+
+    db.run("UPDATE fila_envio SET mensagem = ?, agendado_para = ? WHERE id = ?", [mensagem, isoDate, id], (err) => {
+        if (err) return res.status(500).send("Erro ao editar fila");
+        res.redirect('/filas?success=editado');
+    });
+});
+
 // Ação para cancelar (deletar) da fila
 router.post('/:id/cancelar', (req, res) => {
     db.run("DELETE FROM fila_envio WHERE id = ?", [req.params.id], (err) => {

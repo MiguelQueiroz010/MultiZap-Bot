@@ -4,7 +4,8 @@ html(lang="pt-br")
     meta(charset="UTF-8")
     meta(name="viewport", content="width=device-width, initial-scale=1.0")
     title= title || "ZBot"
-
+    link(rel="icon", type="image/png", href="/favicon.png")
+    link(rel='stylesheet', href='/stylesheets/style.css')
     link(href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet")
     script(src="https://unpkg.com/@phosphor-icons/web")
 
@@ -93,7 +94,7 @@ html(lang="pt-br")
         a(href="/contatos") Contatos
         a(href="/campanhas") Campanhas
         a(href="/fluxos") Fluxos
-        a(href="/biblioteca") Biblioteca
+        a(href="/biblioteca") Acervo
         a(href="/filas") Filas & Erros
         form(action="/logout" method="POST" style="margin-left: 1.5rem;")
           button(type="submit" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='rgba(239, 68, 68, 0.2)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.1)'")

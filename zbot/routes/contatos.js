@@ -83,6 +83,27 @@ router.post('/import', upload.single('csvFile'), (req, res) => {
         });
 });
 
+// Ação: Editar Contato
+router.post('/:id/editar', (req, res) => {
+    const contatoId = req.params.id;
+    const { nome, telefone } = req.body;
+
+    if (!nome || !telefone) {
+        return res.status(400).send("Nome e telefone são obrigatórios");
+    }
+
+    let cleanPhone = telefone.replace(/\D/g, '');
+    const finalPhone = cleanPhone.endsWith('@c.us') ? cleanPhone : `${cleanPhone}@c.us`;
+
+    db.run('UPDATE contatos SET nome = ?, telefone = ? WHERE id = ?', [nome.trim(), finalPhone, contatoId], (err) => {
+        if (err) {
+            console.error("Erro ao editar contato", err);
+            return res.status(500).send("Erro ao editar contato");
+        }
+        res.redirect('/contatos?success=editado');
+    });
+});
+
 // Ação: Excluir Contato
 router.post('/:id/excluir', (req, res) => {
     const contatoId = req.params.id;

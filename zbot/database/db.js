@@ -35,7 +35,9 @@ function createTables() {
                 delay_min INTEGER NOT NULL,
                 delay_max INTEGER NOT NULL,
                 recorrente INTEGER DEFAULT 0,
-                random_library INTEGER DEFAULT 0
+                random_library INTEGER DEFAULT 0,
+                contato_id INTEGER,
+                FOREIGN KEY (contato_id) REFERENCES contatos(id)
             )
         `);
 
@@ -56,6 +58,7 @@ function createTables() {
                 mensagem TEXT NOT NULL,
                 agendado_para DATETIME NOT NULL,
                 status TEXT DEFAULT 'PENDENTE',
+                campanha_id INTEGER,
                 FOREIGN KEY (contato_id) REFERENCES contatos(id)
             )
         `);

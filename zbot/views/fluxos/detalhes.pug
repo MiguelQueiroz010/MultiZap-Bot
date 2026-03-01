@@ -35,12 +35,17 @@ block content
                 .timeline-content(style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);")
                   .header(style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;")
                     span(style="font-size: 0.8rem; color: var(--text-dim); font-weight: 600;") Etapa #{etapa.ordem}
-                    span(style="font-size: 0.8rem; color: #fbbf24; font-family: monospace;") 
-                      i.ph.ph-clock(style="margin-right: 4px; vertical-align: middle;")
-                      if index === 0
-                        | Envio Imediato
-                      else
-                        | +#{etapa.delay_minutos} min
+                    div(style="display: flex; align-items: center; gap: 10px;")
+                      span(style="font-size: 0.8rem; color: #fbbf24; font-family: monospace;") 
+                        i.ph.ph-clock(style="margin-right: 4px; vertical-align: middle;")
+                        if index === 0
+                          | Envio Imediato
+                        else
+                          | +#{etapa.delay_minutos} min
+                      
+                      button(type="button" title="Editar Etapa" onclick=`openEditStepModal(${JSON.stringify(etapa)})` style="background: none; border: none; color: var(--primary); cursor: pointer; padding: 0; display: inline-flex; align-items: center;")
+                        i.ph-bold.ph-pencil-simple(style="font-size: 1rem;")
+
                   p(style="font-size: 0.95rem; white-space: pre-wrap; line-height: 1.4;")= etapa.mensagem
         else
           p(style="color: var(--text-dim); text-align: center; padding: 2rem; border: 1px dashed rgba(255,255,255,0.1); border-radius: 8px;") Nenhuma etapa configurada.<br>Adicione a primeira mensagem ao lado.
@@ -74,3 +79,57 @@ block content
         
         form(action=`/fluxos/${fluxo.id}/iniciar` method="POST")
           button(type="submit" style="background: #10b981; color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer;") Iniciar Fluxo Agora
+
+  //- Modal de Edição de Etapa
+  #editStepModal(style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(5px);")
+    .card(style="background: var(--bg-dark); width: 90%; max-width: 500px; padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); position: relative;")
+      button(onclick="closeEditStepModal()" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 1.5rem;") &times;
+      h3(style="margin-bottom: 1.5rem;") Editar Etapa
+      
+      form#editStepForm(method="POST")
+        input(type="hidden" name="redirecionar_para_fluxo" value=fluxo.id)
+        div(style="display: flex; flex-direction: column; gap: 1rem;")
+          div#editDelayGroup
+            label(style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.9rem;") Delay em Minutos
+            input#editDelay(type="number" name="delay_minutos" min="1" required style="width: 100%; padding: 0.75rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(0,0,0,0.2); color: white;")
+          
+          div
+            label(style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.9rem;") Mensagem
+            textarea#editMensagem(name="mensagem" required rows="5" style="width: 100%; padding: 0.75rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(0,0,0,0.2); color: white; resize: vertical;")
+          
+          button(type="submit" style="background: var(--primary); color: #0f172a; border: none; padding: 0.75rem; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 1rem;") Atualizar Etapa
+
+  script.
+    function openEditStepModal(etapa) {
+      document.getElementById('editStepForm').action = `/fluxos/etapa/${etapa.id}/editar`;
+      document.getElementById('editMensagem').value = etapa.mensagem;
+      document.getElementById('editDelay').value = etapa.delay_minutos;
+      
+      // Se for a primeira etapa (ordem 1), o delay é sempre 0 e não deve ser editável
+      const delayInput = document.getElementById('editDelay');
+      if (etapa.ordem === 1) {
+        delayInput.value = 0;
+        delayInput.readOnly = true;
+        delayInput.title = "A primeira etapa é sempre imediata.";
+        delayInput.style.background = "rgba(0,0,0,0.4)";
+        delayInput.style.color = "var(--text-dim)";
+      } else {
+        delayInput.readOnly = false;
+        delayInput.title = "";
+        delayInput.style.background = "rgba(0,0,0,0.2)";
+        delayInput.style.color = "white";
+      }
+
+      document.getElementById('editStepModal').style.display = 'flex';
+    }
+
+    function closeEditStepModal() {
+      document.getElementById('editStepModal').style.display = 'none';
+    }
+
+    window.onclick = function(event) {
+      const modal = document.getElementById('editStepModal');
+      if (event.target == modal) {
+        closeEditStepModal();
+      }
+    }
