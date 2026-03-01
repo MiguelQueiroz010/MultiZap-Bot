@@ -92,4 +92,4 @@ O ZBot foi projetado com a segurança do seu número em mente:
 Este projeto está sob a licença MIT. Sinta-se à vontade para utilizar e modificar para seus próprios projetos.
 
 ---
-*Desenvolvido com ❤️ por [Seu Nome/MiguelQueiroz010]*
+*Desenvolvido por MiguelQueiroz010*

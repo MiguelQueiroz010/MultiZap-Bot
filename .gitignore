@@ -1,4 +1,6 @@
 node_modules/
 tokens/
+uploads/
+repositories/
 .env
 zbot/database/bot.db

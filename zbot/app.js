@@ -1,6 +1,7 @@
 import createError from 'http-errors';
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
@@ -43,22 +44,33 @@ function iniciarWPP() {
     currentStatus = 'Iniciando...';
     io.emit('status', currentStatus);
 
+    console.log("⏳ Iniciando WPPConnect.create...");
     wppconnect.create({
         session: 'admin-session',
+        disableWelcome: true, // Pula mensagem de boas vindas
+        updatesLog: false,     // Desabilita logs de atualização (mais rápido)
+        debug: false,
         catchQR: (base64Qrimg) => {
+            console.log("📸 QR Code recebido.");
             io.emit('qrCode', base64Qrimg);
             currentStatus = 'Escaneie o QR Code';
             io.emit('status', currentStatus);
         },
         statusFind: (statusSession, session) => {
-            console.log('Status da Sessão:', statusSession);
+            console.log('📡 Status da Sessão:', statusSession);
             currentStatus = statusSession;
             io.emit('status', currentStatus);
         },
         autoClose: 0,
-        protocolTimeout: 60000, // Aumenta timeout para evitar ProtocolError
+        protocolTimeout: 90000, // Aumenta timeout para 90s para conexões lentas
         puppeteerOptions: {
-            args: ['--no-sandbox', '--disable-setuid-sandbox'] // Melhora estabilidade
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-gpu',                // Melhora performance em servidores
+                '--disable-dev-shm-usage',      // Evita problemas de memória compartilhada
+                '--hide-scrollbars'
+            ]
         }
     })
         .then((client) => {
