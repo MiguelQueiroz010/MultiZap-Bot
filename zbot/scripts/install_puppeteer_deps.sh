@@ -114,10 +114,6 @@ npm install
 echo
 echo "✓ Instalação concluída!"
 echo
-echo "📝 Notas importantes:"
-echo "- Você pode apontar o Puppeteer para um Chrome/Chromium do sistema usando a variável de ambiente PUPPETEER_EXECUTABLE_PATH ou CHROME_PATH."
-echo "  Exemplo: export PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser"
-echo
 echo "- Para testar, execute:" 
 echo "  npm start"
 echo
