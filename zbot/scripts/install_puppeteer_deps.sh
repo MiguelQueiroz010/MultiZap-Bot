@@ -89,7 +89,7 @@ echo "Instalando pacotes: ${PACKAGES[*]}"
 ${SUDO} apt-get install -y --no-install-recommends "${PACKAGES[@]}" || true
 
 echo
-echo "3. (Opcional) Instalar Google Chrome estável (útil se quiser usar o Chrome do sistema)"
+echo "3. (OBRIGATÓRIO) Instalar Google Chrome estável (útil se quiser usar o Chrome do sistema)"
 read -p "Deseja instalar google-chrome-stable? [y/N]: " INSTALL_CHROME || true
 if [[ "$INSTALL_CHROME" =~ ^[Yy]$ ]]; then
     if command -v apt-key >/dev/null 2>&1; then
@@ -108,11 +108,8 @@ echo "4. Limpando cache do Puppeteer (para forçar re-download se necessário)..
 rm -rf "$HOME/.cache/puppeteer" || true
 
 echo
-echo "5. Reinstalando dependências npm do projeto (opcional)"
-read -p "Deseja rodar 'npm install' no projeto agora? [y/N]: " RUN_NPM || true
-if [[ "$RUN_NPM" =~ ^[Yy]$ ]]; then
-    (cd "$(dirname "$0")/.." && npm install)
-fi
+echo "5. Instalando dependências npm do projeto"
+npm install
 
 echo
 echo "✓ Instalação concluída!"
@@ -122,5 +119,5 @@ echo "- Você pode apontar o Puppeteer para um Chrome/Chromium do sistema usando
 echo "  Exemplo: export PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser"
 echo
 echo "- Para testar, execute:" 
-echo "  cd /workspaces/MultiZap-Bot/zbot && npm start"
+echo "  npm start"
 echo
