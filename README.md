@@ -2,6 +2,10 @@
 
 O **ZBot** é uma plataforma robusta e profissional desenvolvida para gerenciar disparos de mensagens, campanhas em massa e fluxos de automação no WhatsApp. Com uma interface moderna, intuitiva e focada em performance, o ZBot permite que você gerencie múltiplos contatos e estratégias de comunicação com segurança e agilidade.
 
+<p align="center">
+  <img src="zbot/public/images/favicon.png" width="320" alt="App Icon">
+</p>
+
 ![Preview do Painel](https://img.shields.io/badge/Status-Ativo-success?style=for-the-badge)
 ![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
 ![SQLite](https://img.shields.io/badge/SQLite-3-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
@@ -24,7 +28,7 @@ O **ZBot** é uma plataforma robusta e profissional desenvolvida para gerenciar 
 - Registre modelos de mensagens, versículos ou frases promocionais.
 - **Sorteio Aleatório:** Envie mensagens diferentes para cada contato utilizando o modo "Sortear do Acervo", reduzindo drasticamente o risco de banimento.
 
-### 📢 Campanhas Poderas
+### 📢 Campanhas Controladas
 - **Disparos Globais ou Individuais:** Escolha um contato específico ou dispare para toda a base.
 - **Agendador Inteligente:** Configure data e hora para o início dos disparos.
 - **Recorrência Diária:** Repita suas campanhas automaticamente a cada 24 horas.
@@ -51,6 +55,7 @@ O ZBot foi construído com as melhores tecnologias do ecossistema JavaScript:
 - **Banco de Dados:** SQLite (Leve, rápido e portátil)
 - **WhatsApp API:** [WPPConnect](https://github.com/wppconnect-team/wppconnect)
 - **Real-time:** Socket.io
+- **Google Antigravity / VSCode**
 - **Ícones:** Phosphor Icons
 
 ---
