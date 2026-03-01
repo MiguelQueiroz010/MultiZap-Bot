@@ -112,32 +112,42 @@ app.get('/', (req, res) => {
 app.post('/logout', async (req, res) => {
     console.log('🔄 Solicitando logout e reset de sessão...');
 
+    // Feedback imediato para o painel
+    currentStatus = 'Iniciando...';
+    io.emit('status', currentStatus);
+    io.emit('qrCode', null); // Limpa QR anterior
+
     try {
         if (clientInstance) {
-            await clientInstance.logout();
-            await clientInstance.close();
+            console.log('🔌 Fechando instância do cliente...');
+            // Tenta dar logout e fechar
+            await Promise.race([
+                clientInstance.logout().catch(() => { }),
+                new Promise(resolve => setTimeout(resolve, 5000)) // Timeout de 5s para fechar
+            ]);
+            await clientInstance.close().catch(() => { });
             clientInstance = null;
         }
     } catch (e) {
         console.error('Erro ao fechar cliente:', e);
     }
 
-    // Aguarda um pouco e apaga a pasta da sessão para forçar novo QR
+    // Aguarda 3 segundos para o SO liberar os arquivos (essencial no Windows)
     setTimeout(() => {
         const sessionPath = path.join(__dirname, 'tokens', 'admin-session');
         if (fs.existsSync(sessionPath)) {
             try {
                 fs.rmSync(sessionPath, { recursive: true, force: true });
-                console.log('Sessão apagada com sucesso.');
+                console.log('✅ Pasta de sessão apagada.');
             } catch (err) {
-                console.error('Erro ao apagar pasta de sessão:', err);
+                console.error('⚠️ Não foi possível apagar a pasta de sessão (está em uso?):', err.message);
             }
         }
 
         // Reinicia o processo
         iniciarWPP();
         res.redirect('/');
-    }, 1000);
+    }, 3000);
 });
 
 app.use('/contatos', contatosRouter);
